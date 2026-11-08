@@ -60,3 +60,26 @@ class BaselineMetrics(BaseMetrics):
         size_b = float(np.sum(b_bin))
 
         return float(np.dot(a, b) / np.sqrt(size_a * size_b))
+
+
+class FuzzyMetrics(BaseMetrics):
+    """
+    Proposed metrics strategy using continuous fuzzy representations.
+    """
+
+    def cardinality(self, a: np.ndarray) -> float:
+        # Continuous sum of memberships
+        # Bounded Sum fix: Cap memberships at 1.0 so merged sizes never exceed n
+        return float(np.sum(np.clip(a, 0.0, 1.0)))
+
+    def overlap(self, a: np.ndarray, b: np.ndarray) -> float:
+        # True Cosine Similarity for continuous fractional vectors.
+        # This prevents the metric from penalizing fuzzy sets compared to crisp K-Means sets.
+        a_bound = np.clip(a, 0.0, 1.0)
+        b_bound = np.clip(b, 0.0, 1.0)
+
+        norm_a = np.linalg.norm(a_bound)
+        norm_b = np.linalg.norm(b_bound)
+
+        # Angular distance perfectly normalizes the soft fuzzy product
+        return float(np.dot(a_bound, b_bound) / (norm_a * norm_b))
