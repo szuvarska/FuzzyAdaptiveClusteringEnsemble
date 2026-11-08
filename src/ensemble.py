@@ -9,11 +9,13 @@ class AdaptiveClusteringEnsemble:
     """
 
     def __init__(self, base_member: BaseMemberClusterer, m_partitions: int, k_clusters: int,
-                 alpha_1: float = 0.8, alpha_2: float = 0.7, delta_alpha: float = 0.1, random_state: int = 42):
+                 sampling_ratio: float = 0.7, alpha_1: float = 0.8, alpha_2: float = 0.7,
+                 delta_alpha: float = 0.1, random_state: int = 42):
         self.base_member = base_member
         self.metrics = base_member.get_metrics_strategy()
         self.m_partitions = m_partitions
         self.k_clusters = k_clusters
+        self.sampling_ratio = sampling_ratio
 
         # Hyperparameters
         self.alpha_1_initial = alpha_1
@@ -27,9 +29,28 @@ class AdaptiveClusteringEnsemble:
         rng = np.random.default_rng(self.random_state)
         all_matrices = []
 
-        for _ in range(self.m_partitions):
+        n_instances, n_features = X.shape
+        n_instance_samples = max(1, int(n_instances * self.sampling_ratio))
+        n_feature_samples = max(1, int(n_features * self.sampling_ratio))
+
+        # Split partitions: half with sample instances, half with sample features
+        half_m = self.m_partitions // 2
+
+        for i in range(self.m_partitions):
             seed = int(rng.integers(0, 10000))
-            local_matrix = self.base_member.get_membership_matrix(X, self.k_clusters, seed)
+
+            if i < half_m:
+                # Subspace Strategy 1: Data Instance Sampling
+                sampled_indices = rng.choice(n_instances, n_instance_samples, replace=False)
+                X_train = X[sampled_indices, :]
+                X_full = X
+            else:
+                # Subspace Strategy 2: Feature Sampling
+                sampled_features = rng.choice(n_features, n_feature_samples, replace=False)
+                X_train = X[:, sampled_features]
+                X_full = X[:, sampled_features]
+
+            local_matrix = self.base_member.get_membership_matrix(X_train, X_full, self.k_clusters, seed)
             all_matrices.append(local_matrix)
 
         theta_1 = np.column_stack(all_matrices)

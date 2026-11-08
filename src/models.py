@@ -12,7 +12,7 @@ class BaseMemberClusterer(ABC):
     """
 
     @abstractmethod
-    def get_membership_matrix(self, X: np.ndarray, k: int, random_state: int) -> np.ndarray:
+    def get_membership_matrix(self, X_train: np.ndarray, X_full: np.ndarray, k: int, random_state: int) -> np.ndarray:
         """Fits the algorithm on X and returns an (n x k) membership matrix."""
         pass
 
@@ -28,10 +28,11 @@ class KMeansMember(BaseMemberClusterer):
     Outputs a discrete binary indicator matrix.
     """
 
-    def get_membership_matrix(self, X: np.ndarray, k: int, random_state: int) -> np.ndarray:
+    def get_membership_matrix(self, X_train: np.ndarray, X_full: np.ndarray, k: int, random_state: int) -> np.ndarray:
         # n_init=1 because ensemble methods rely on varied weak initializations
         kmeans = KMeans(n_clusters=k, n_init=1, random_state=random_state)
-        labels = kmeans.fit_predict(X)
+        kmeans.fit(X_train)
+        labels = kmeans.predict(X_full)
 
         theta_cols = []
         unique_clusters = np.unique(labels)
@@ -56,16 +57,23 @@ class FCMMember(BaseMemberClusterer):
     def __init__(self, m_fuzz: float = 2.0):
         self.m_fuzz = m_fuzz
 
-    def get_membership_matrix(self, X: np.ndarray, k: int, random_state: int) -> np.ndarray:
+    def get_membership_matrix(self, X_train: np.ndarray, X_full: np.ndarray, k: int, random_state: int) -> np.ndarray:
         np.random.seed(random_state)
         # skfuzzy cmeans expects data in shape (n_features, n_samples)
-        X_T = X.T
-        # Run fuzzy c-means
-        cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
-            X_T, c=k, m=self.m_fuzz, error=0.005, maxiter=1000, init=None
+        X_train_T = X_train.T
+        # Run fuzzy c-means on the training subset
+        cntr, u_train, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
+            X_train_T, c=k, m=self.m_fuzz, error=0.005, maxiter=1000, init=None
         )
-        # u is returned as (k_clusters, n_samples), transpose it to match (n x k)
-        return u.T
+
+        # Predict continuous memberships for the full dataset using the discovered cluster centers
+        X_full_T = X_full.T
+        u_full, u0_full, d_full, jm_full, p_full, fpc_full = fuzz.cluster.cmeans_predict(
+            X_full_T, cntr, m=self.m_fuzz, error=0.005, maxiter=1000
+        )
+
+        # u_full is returned as (k_clusters, n_samples), transpose it to match (n x k)
+        return u_full.T
 
     def get_metrics_strategy(self) -> 'BaseMetrics':
         return FuzzyMetrics()
