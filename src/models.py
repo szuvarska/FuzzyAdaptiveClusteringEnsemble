@@ -1,6 +1,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from sklearn.cluster import KMeans
+from src.metrics import BaseMetrics, BaselineMetrics
 
 
 class BaseMemberClusterer(ABC):
@@ -12,6 +13,11 @@ class BaseMemberClusterer(ABC):
     @abstractmethod
     def get_membership_matrix(self, X: np.ndarray, k: int, random_state: int) -> np.ndarray:
         """Fits the algorithm on X and returns an (n x k) membership matrix."""
+        pass
+
+    @abstractmethod
+    def get_metrics_strategy(self) -> 'BaseMetrics':
+        """Factory method: Returns the correct metrics strategy for this base member."""
         pass
 
 
@@ -35,3 +41,6 @@ class KMeansMember(BaseMemberClusterer):
             theta_cols.append(binary_col)
 
         return np.column_stack(theta_cols)
+
+    def get_metrics_strategy(self) -> 'BaseMetrics':
+        return BaselineMetrics()

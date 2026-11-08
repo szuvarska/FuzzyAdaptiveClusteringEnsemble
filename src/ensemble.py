@@ -8,10 +8,10 @@ class AdaptiveClusteringEnsemble:
     Handles the transformation, merging, and hard clustering stages.
     """
 
-    def __init__(self, base_member: BaseMemberClusterer, metrics: BaseMetrics, m_partitions: int, k_clusters: int,
+    def __init__(self, base_member: BaseMemberClusterer, m_partitions: int, k_clusters: int,
                  alpha_1: float = 0.8, alpha_2: float = 0.7, delta_alpha: float = 0.1, random_state: int = 42):
         self.base_member = base_member
-        self.metrics = metrics
+        self.metrics = base_member.get_metrics_strategy()
         self.m_partitions = m_partitions
         self.k_clusters = k_clusters
 
@@ -193,3 +193,21 @@ class AdaptiveClusteringEnsemble:
             current_variance[best_g] = best_new_var
 
         return labels
+
+    def fit_predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Executes the complete ACE pipeline (Stages 1, 2, and 3).
+        Returns the final crisp cluster labels for the input data X.
+        """
+        n_instances = X.shape[0]
+
+        # Stage 1
+        theta_1_initial = self.stage1_transformation(X)
+
+        # Stage 2
+        theta_1_final, theta_2_elim = self.stage2_consensus_merging(theta_1_initial, n_instances)
+
+        # Stage 3
+        final_labels = self.stage3_hard_clustering(theta_1_final, theta_2_elim)
+
+        return final_labels
