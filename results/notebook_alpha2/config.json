@@ -1,0 +1,56 @@
+{
+  "config": {
+    "name": "notebook_alpha2",
+    "datasets": [
+      "iris",
+      "wine",
+      "breast_cancer"
+    ],
+    "settings": [
+      "fixed"
+    ],
+    "methods": [
+      "ACE",
+      "Fuzzy-ACE"
+    ],
+    "n_runs": 10,
+    "base_seed": 0,
+    "m_partitions": 10,
+    "sampling_ratio": 0.7,
+    "alpha_1": 0.8,
+    "alpha_2": 0.7,
+    "delta_alpha": 0.1,
+    "fcm_m_fuzz": 2.0,
+    "fuzzy_ace_m_range": [
+      1.5,
+      2.5
+    ],
+    "kmeans_n_init": 1,
+    "eac_linkage": "average",
+    "data_dir": "C:\\Users\\lukas\\PycharmProjects\\FuzzyAdaptiveClusteringEnsemble\\data\\raw",
+    "results_dir": "C:\\Users\\lukas\\PycharmProjects\\FuzzyAdaptiveClusteringEnsemble\\results",
+    "n_jobs": -1
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "scikit-fuzzy": "0.5.0"
+  },
+  "sessions": [
+    {
+      "started": "2026-11-10T15:17:21",
+      "git_commit": "2ba6c27849e2e61e35b0b980cc1ab782f646a45f",
+      "platform": "Windows-11-10.0.26200-SP0"
+    }
+  ],
+  "alpha_2_values": [
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9
+  ]
+}

@@ -1,0 +1,5 @@
+setting,method,metric,rank_alpha2_0.5,rank_alpha2_0.6,rank_alpha2_0.7,rank_alpha2_0.8,rank_alpha2_0.9
+fixed,ACE,ari,3.0,3.0,3.0,3.0,3.0
+fixed,ACE,nmi,3.0,3.0,3.0,3.0,3.0
+fixed,Fuzzy-ACE,ari,3.0,3.0,3.0,3.0,3.0
+fixed,Fuzzy-ACE,nmi,3.0,3.0,3.0,3.0,3.0

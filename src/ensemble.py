@@ -29,6 +29,7 @@ class AdaptiveClusteringEnsemble:
         """Generates m base models and constructs the global Theta_1 matrix."""
         rng = np.random.default_rng(self.random_state)
         all_matrices = []
+        partition_ids = []  # which base partition each column of Theta_1 came from
 
         n_instances, n_features = X.shape
         n_instance_samples = max(1, int(n_instances * self.sampling_ratio))
@@ -62,22 +63,32 @@ class AdaptiveClusteringEnsemble:
 
             local_matrix = self.base_member.get_membership_matrix(X_train, X_full, current_k, seed)
             all_matrices.append(local_matrix)
+            partition_ids.extend([i] * local_matrix.shape[1])
 
         theta_1 = np.column_stack(all_matrices)
+        # Recorded here because partitions can have different numbers of columns
+        # (variable k, or K-Means returning an empty cluster).
+        self.partition_ids_ = np.asarray(partition_ids)
         return theta_1
 
-    def stage2_consensus_merging(self, theta_1_initial: np.ndarray, n_instances: int):
+    def stage2_consensus_merging(self, theta_1_initial: np.ndarray, n_instances: int, partition_ids=None):
         """
         Iteratively merges candidate clusters from different members.
         Returns the finalized active clusters (Theta_1) and eliminated clusters (Theta_2).
         """
+        if partition_ids is None:
+            partition_ids = getattr(self, "partition_ids_", None)
+        if partition_ids is None or len(partition_ids) != theta_1_initial.shape[1]:
+            raise ValueError("partition_ids must give the source partition of every Theta_1 column; "
+                             "run stage1_transformation first or pass them explicitly.")
+
         current_alpha = self.alpha_1_initial
 
         while True:
             theta_1 = theta_1_initial.copy()
 
             # Track origins to ensure we only merge clusters from different base partitions
-            origins = [{i // self.k_clusters} for i in range(theta_1.shape[1])]
+            origins = [{int(p)} for p in partition_ids]
 
             while True:
                 merged_in_pass = False
@@ -150,6 +161,7 @@ class AdaptiveClusteringEnsemble:
                 if current_alpha > 1.0:
                     raise ValueError("Cannot resolve clusters: Merging threshold exceeded 1.0 limit.")
 
+        self.final_alpha_1_ = current_alpha
         return theta_1, theta_2
 
     def stage3_hard_clustering(self, theta_1: np.ndarray, theta_2: np.ndarray) -> np.ndarray:

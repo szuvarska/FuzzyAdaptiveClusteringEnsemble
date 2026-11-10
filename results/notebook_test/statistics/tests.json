@@ -1,0 +1,126 @@
+[
+  {
+    "metric": "ari",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 3,
+    "n_methods": 5,
+    "datasets_used": [
+      "breast_cancer",
+      "iris",
+      "wine"
+    ],
+    "average_ranks": {
+      "FCM": 2.3333,
+      "ACE": 3.0,
+      "EAC": 3.0,
+      "KMeans": 3.0,
+      "Fuzzy-ACE": 3.6667
+    },
+    "friedman": {
+      "chi2": 1.0666666666666629,
+      "p_value": 0.899524203248716
+    },
+    "iman_davenport": {
+      "F": 0.19512195121951142,
+      "df1": 4,
+      "df2": 8,
+      "p_value": 0.9341200480956497,
+      "reject_h0": false
+    },
+    "nemenyi": null
+  },
+  {
+    "metric": "nmi",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 3,
+    "n_methods": 5,
+    "datasets_used": [
+      "breast_cancer",
+      "iris",
+      "wine"
+    ],
+    "average_ranks": {
+      "EAC": 2.6667,
+      "FCM": 2.6667,
+      "ACE": 3.0,
+      "KMeans": 3.0,
+      "Fuzzy-ACE": 3.6667
+    },
+    "friedman": {
+      "chi2": 0.7999999999999972,
+      "p_value": 0.9384480644498954
+    },
+    "iman_davenport": {
+      "F": 0.14285714285714232,
+      "df1": 4,
+      "df2": 8,
+      "p_value": 0.9611904526748973,
+      "reject_h0": false
+    },
+    "nemenyi": null
+  },
+  {
+    "metric": "ari",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 3,
+    "n_methods": 5,
+    "datasets_used": [
+      "breast_cancer",
+      "iris",
+      "wine"
+    ],
+    "average_ranks": {
+      "FCM": 2.0,
+      "KMeans": 2.0,
+      "EAC": 3.0,
+      "ACE": 4.0,
+      "Fuzzy-ACE": 4.0
+    },
+    "friedman": {
+      "chi2": 4.8,
+      "p_value": 0.30844104118400245
+    },
+    "iman_davenport": {
+      "F": 1.3333333333333333,
+      "df1": 4,
+      "df2": 8,
+      "p_value": 0.3369599999999999,
+      "reject_h0": false
+    },
+    "nemenyi": null
+  },
+  {
+    "metric": "nmi",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 3,
+    "n_methods": 5,
+    "datasets_used": [
+      "breast_cancer",
+      "iris",
+      "wine"
+    ],
+    "average_ranks": {
+      "EAC": 2.3333,
+      "FCM": 2.3333,
+      "KMeans": 2.6667,
+      "ACE": 3.3333,
+      "Fuzzy-ACE": 4.3333
+    },
+    "friedman": {
+      "chi2": 3.466666666666663,
+      "p_value": 0.48296481840136507
+    },
+    "iman_davenport": {
+      "F": 0.8124999999999988,
+      "df1": 4,
+      "df2": 8,
+      "p_value": 0.5511998347135435,
+      "reject_h0": false
+    },
+    "nemenyi": null
+  }
+]

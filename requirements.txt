@@ -1,2 +1,7 @@
 numpy==2.5.4
 scikit_learn==1.9.1
+scikit-fuzzy==0.5.0
+scipy>=1.11
+pandas>=2.0
+matplotlib>=3.7
+joblib>=1.4

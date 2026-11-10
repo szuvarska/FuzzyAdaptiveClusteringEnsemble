@@ -54,22 +54,36 @@ class FCMMember(BaseMemberClusterer):
     Outputs a continuous degree of membership matrix (u_ij in [0,1]).
     """
 
-    def __init__(self, m_fuzz: float = 2.0):
+    def __init__(self, m_fuzz: float = 2.0, m_fuzz_range: tuple = None):
+        """
+        m_fuzz: fixed fuzzification parameter.
+        m_fuzz_range: optional (low, high). If given, a fresh m is drawn uniformly from this interval
+                      for every generated partition (plan: [1.5, 2.5]) to inject structural diversity.
+        """
         self.m_fuzz = m_fuzz
+        self.m_fuzz_range = m_fuzz_range
+        self.last_m_fuzz_ = m_fuzz
 
     def get_membership_matrix(self, X_train: np.ndarray, X_full: np.ndarray, k: int, random_state: int) -> np.ndarray:
+        if self.m_fuzz_range is not None:
+            low, high = self.m_fuzz_range
+            m_fuzz = float(np.random.default_rng(random_state).uniform(low, high))
+        else:
+            m_fuzz = self.m_fuzz
+        self.last_m_fuzz_ = m_fuzz
+
         np.random.seed(random_state)
         # skfuzzy cmeans expects data in shape (n_features, n_samples)
         X_train_T = X_train.T
         # Run fuzzy c-means on the training subset
         cntr, u_train, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
-            X_train_T, c=k, m=self.m_fuzz, error=0.005, maxiter=1000, init=None
+            X_train_T, c=k, m=m_fuzz, error=0.005, maxiter=1000, init=None
         )
 
         # Predict continuous memberships for the full dataset using the discovered cluster centers
         X_full_T = X_full.T
         u_full, u0_full, d_full, jm_full, p_full, fpc_full = fuzz.cluster.cmeans_predict(
-            X_full_T, cntr, m=self.m_fuzz, error=0.005, maxiter=1000
+            X_full_T, cntr, m=m_fuzz, error=0.005, maxiter=1000
         )
 
         # u_full is returned as (k_clusters, n_samples), transpose it to match (n x k)
