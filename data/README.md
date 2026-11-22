@@ -30,6 +30,12 @@ python scripts/check_datasets.py
 | 10 | `vehicle` | Statlog (Vehicle) | `data/raw/vehicle/` `xa?.dat` | 846 | 18 | 4 | [UCI](https://archive.ics.uci.edu/dataset/149/statlog+vehicle+silhouettes) |
 | 11 | `image_segmentation` | Image Segmentation | `data/raw/image_segmentation/` `segmentation.data`, `segmentation.test` | 2310 | 19 | 7 | [UCI](https://archive.ics.uci.edu/dataset/50/image+segmentation) |
 | 12 | `dermatology` | Dermatology | `data/raw/dermatology/` `dermatology.data` | 366 | 34 | 6 | [UCI](https://archive.ics.uci.edu/dataset/33/dermatology) |
+| 13 | `birch1` | Birch1 | `data/raw/birch/` `birch1.txt`, `b1-gt.pa` | 100000 | 2 | 100 | [SIPU](https://cs.joensuu.fi/sipu/datasets/) |
+| 14 | `birch2` | Birch2 | `data/raw/birch/` `birch2.txt`, `b2-gt.pa` | 100000 | 2 | 100 | [SIPU](https://cs.joensuu.fi/sipu/datasets/) |
+| 15 | `birch3` | Birch3 | `data/raw/birch/` `birch3.txt`, `b3-gt.txt` | 100000 | 2 | 100 | [SIPU](https://cs.joensuu.fi/sipu/datasets/) |
+| 16 | `unbalance` | Unbalance | `data/raw/unbalance/` `unbalance.txt`, `unbalance-gt.pa` | 6500 | 2 | 8 | [SIPU](https://cs.joensuu.fi/sipu/datasets/) |
+| 17 | `dim032` | Dim032 | `data/raw/dim/` `dim032.txt`, `dim032.pa` | 1024 | 32 | 16 | [SIPU](https://cs.joensuu.fi/sipu/datasets/) |
+| 18 | `dim064` | Dim064 | `data/raw/dim/` `dim064.txt`, `dim064.pa` | 1024 | 64 | 16 | [SIPU](https://cs.joensuu.fi/sipu/datasets/) |
 
 Notes
 
@@ -38,4 +44,10 @@ Notes
 - **Image Segmentation** uses both `segmentation.data` (210 rows) and `segmentation.test` (2100 rows); the text header is skipped automatically.
 - ID / sequence-name columns (Glass, Breast Cancer, Ecoli, Yeast) are dropped, `?` is read as missing.
 - Preprocessing (`DataPreprocessor`): median imputation → removal of constant columns → z-score. Labels are used only for ARI/NMI.
+- **SIPU sets (13-18)** are part of the default experiment. Birch1-3 (n = 100,000) are replaced by one fixed
+  stratified subsample of `max_instances` points (default 5000, `--max-instances 0` for all points), because EAC
+  needs an n x n matrix (~80 GB at full size).
+- **Birch3** has no published partition file; each point is labelled with its nearest ground-truth centroid (`b3-gt.txt`).
+  On Birch1 and Birch2 this reproduces the official `.pa` labels exactly (ARI = 1.0).
+- **Unbalance** labels come zipped (`unbalance-gt-pa.zip`); extract `unbalance-gt.pa` into the same folder.
 - The loader checks n, d and k against the table above and prints a warning if a file looks different.

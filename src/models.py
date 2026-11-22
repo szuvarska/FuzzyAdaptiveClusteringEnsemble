@@ -1,93 +1,58 @@
-import numpy as np
+"""Base ensemble members: each turns a (sub)dataset into an n x k membership matrix."""
 from abc import ABC, abstractmethod
-from sklearn.cluster import KMeans
-from src.metrics import BaseMetrics, BaselineMetrics, FuzzyMetrics
+from typing import Optional, Tuple
+
+import numpy as np
 import skfuzzy as fuzz
+from sklearn.cluster import KMeans
+
+from src.metrics import BaseMetrics, BaselineMetrics, FuzzyMetrics
 
 
 class BaseMemberClusterer(ABC):
-    """
-    Abstract base interface for a base clustering model.
-    Mandates how a model should output its local membership matrix.
-    """
+    @abstractmethod
+    def get_membership_matrix(self, X_train: np.ndarray, X_full: np.ndarray, k: int,
+                              random_state: int) -> np.ndarray:
+        """Fits on X_train and returns the (n_full x k) membership matrix of X_full."""
 
     @abstractmethod
-    def get_membership_matrix(self, X_train: np.ndarray, X_full: np.ndarray, k: int, random_state: int) -> np.ndarray:
-        """Fits the algorithm on X and returns an (n x k) membership matrix."""
-        pass
-
-    @abstractmethod
-    def get_metrics_strategy(self) -> 'BaseMetrics':
-        """Factory method: Returns the correct metrics strategy for this base member."""
-        pass
+    def get_metrics_strategy(self) -> BaseMetrics:
+        """Set metrics matching this member's membership type."""
 
 
 class KMeansMember(BaseMemberClusterer):
-    """
-    Baseline implementation for a single K-Means run.
-    Outputs a discrete binary indicator matrix.
-    """
+    """Single K-Means run (n_init=1 for diversity) -> binary indicator matrix."""
 
-    def get_membership_matrix(self, X_train: np.ndarray, X_full: np.ndarray, k: int, random_state: int) -> np.ndarray:
-        # n_init=1 because ensemble methods rely on varied weak initializations
-        kmeans = KMeans(n_clusters=k, n_init=1, random_state=random_state)
-        kmeans.fit(X_train)
-        labels = kmeans.predict(X_full)
+    def get_membership_matrix(self, X_train, X_full, k, random_state):
+        labels = KMeans(n_clusters=k, n_init=1, random_state=random_state).fit(X_train).predict(X_full)
+        return np.column_stack([(labels == c).astype(float) for c in np.unique(labels)])
 
-        theta_cols = []
-        unique_clusters = np.unique(labels)
-
-        for cluster_id in unique_clusters:
-            # Map crisp labels to binary column vectors
-            binary_col = (labels == cluster_id).astype(float)
-            theta_cols.append(binary_col)
-
-        return np.column_stack(theta_cols)
-
-    def get_metrics_strategy(self) -> 'BaseMetrics':
+    def get_metrics_strategy(self):
         return BaselineMetrics()
 
 
 class FCMMember(BaseMemberClusterer):
     """
-    Fuzzy C-Means base model.
-    Outputs a continuous degree of membership matrix (u_ij in [0,1]).
+    Fuzzy C-Means -> continuous membership matrix in [0, 1].
+    If ``m_fuzz_range`` is given, the fuzzifier m is drawn uniformly from it for every partition.
     """
 
-    def __init__(self, m_fuzz: float = 2.0, m_fuzz_range: tuple = None):
-        """
-        m_fuzz: fixed fuzzification parameter.
-        m_fuzz_range: optional (low, high). If given, a fresh m is drawn uniformly from this interval
-                      for every generated partition (plan: [1.5, 2.5]) to inject structural diversity.
-        """
+    def __init__(self, m_fuzz: float = 2.0, m_fuzz_range: Optional[Tuple[float, float]] = None):
         self.m_fuzz = m_fuzz
         self.m_fuzz_range = m_fuzz_range
         self.last_m_fuzz_ = m_fuzz
 
-    def get_membership_matrix(self, X_train: np.ndarray, X_full: np.ndarray, k: int, random_state: int) -> np.ndarray:
+    def get_membership_matrix(self, X_train, X_full, k, random_state):
         if self.m_fuzz_range is not None:
-            low, high = self.m_fuzz_range
-            m_fuzz = float(np.random.default_rng(random_state).uniform(low, high))
+            m = float(np.random.default_rng(random_state).uniform(*self.m_fuzz_range))
         else:
-            m_fuzz = self.m_fuzz
-        self.last_m_fuzz_ = m_fuzz
+            m = self.m_fuzz
+        self.last_m_fuzz_ = m
 
-        np.random.seed(random_state)
-        # skfuzzy cmeans expects data in shape (n_features, n_samples)
-        X_train_T = X_train.T
-        # Run fuzzy c-means on the training subset
-        cntr, u_train, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
-            X_train_T, c=k, m=m_fuzz, error=0.005, maxiter=1000, init=None
-        )
-
-        # Predict continuous memberships for the full dataset using the discovered cluster centers
-        X_full_T = X_full.T
-        u_full, u0_full, d_full, jm_full, p_full, fpc_full = fuzz.cluster.cmeans_predict(
-            X_full_T, cntr, m=m_fuzz, error=0.005, maxiter=1000
-        )
-
-        # u_full is returned as (k_clusters, n_samples), transpose it to match (n x k)
+        np.random.seed(random_state)  # skfuzzy draws its initial partition from np.random
+        centers, *_ = fuzz.cluster.cmeans(X_train.T, c=k, m=m, error=0.005, maxiter=1000, init=None)
+        u_full, *_ = fuzz.cluster.cmeans_predict(X_full.T, centers, m=m, error=0.005, maxiter=1000)
         return u_full.T
 
-    def get_metrics_strategy(self) -> 'BaseMetrics':
+    def get_metrics_strategy(self):
         return FuzzyMetrics()
