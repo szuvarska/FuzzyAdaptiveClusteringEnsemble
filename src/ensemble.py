@@ -17,7 +17,7 @@ class AdaptiveClusteringEnsemble:
 
     def __init__(self, base_member: BaseMemberClusterer, m_partitions: int, k_clusters: int,
                  variable_k: bool = False, sampling_ratio: float = 0.7, alpha_1: float = 0.8,
-                 alpha_2: float = 0.7, delta_alpha: float = 0.1, random_state: int = 42):
+                 alpha_1_min: float = 0.6, alpha_2: float = 0.7, delta_alpha: float = 0.1, random_state: int = 42):
         self.base_member = base_member
         self.metrics = base_member.get_metrics_strategy()
         self.m_partitions = m_partitions
@@ -25,6 +25,7 @@ class AdaptiveClusteringEnsemble:
         self.variable_k = variable_k
         self.sampling_ratio = sampling_ratio
         self.alpha_1_initial = alpha_1
+        self.alpha_1_min = alpha_1_min
         self.alpha_2 = alpha_2
         self.delta_alpha = delta_alpha
         self.random_state = random_state
@@ -76,7 +77,7 @@ class AdaptiveClusteringEnsemble:
         return self.metrics.set_correlation_matrix(theta, theta, n)
 
     def _merge_until_stable(self, theta: np.ndarray, partition_ids, scores: np.ndarray, alpha: float,
-                            n: int) -> np.ndarray:
+                            n: int, min_clusters: int = 1) -> np.ndarray:
         """
         Repeatedly merges the most correlated pair (score >= alpha) of clusters from disjoint partitions;
         the merged cluster replaces the pair at the end of the column order. Ties go to the first pair in
@@ -104,7 +105,10 @@ class AdaptiveClusteringEnsemble:
         best_col = np.argmax(cand, axis=1)
         best_val = cand[np.arange(n_slots), best_col]
 
+        n_active = c0
         for new in range(c0, n_slots):
+            if n_active <= min_clusters:
+                break
             i = int(np.argmax(best_val))
             if best_val[i] == -np.inf:
                 break
@@ -129,6 +133,7 @@ class AdaptiveClusteringEnsemble:
             better = cand[rows, new] > best_val[rows]
             best_val[rows[better]] = cand[rows[better], new]
             best_col[rows[better]] = new
+            n_active -= 1
         return cols[:, active]
 
     def stage2_consensus_merging(self, theta_1_initial: np.ndarray, n_instances: int, partition_ids=None):
@@ -146,10 +151,18 @@ class AdaptiveClusteringEnsemble:
             n_active = theta_1.shape[1]
             if n_active >= self.k_clusters:
                 break
-            # Too few clusters: the threshold was too lenient, make it stricter and retry
             alpha += self.delta_alpha
             if alpha > 1.0:
                 raise ValueError("Cannot resolve clusters: Merging threshold exceeded 1.0 limit.")
+
+        # If still > k, continue merging down to alpha_1_min (stopping as soon as k remain)
+        if n_active > self.k_clusters and self.alpha_1_min < alpha:
+            theta_1 = self._merge_until_stable(
+                theta_1_initial, partition_ids, scores, self.alpha_1_min, n_instances,
+                min_clusters=self.k_clusters,
+            )
+            n_active = theta_1.shape[1]
+
         self.final_alpha_1_ = alpha
 
         if n_active == self.k_clusters:
