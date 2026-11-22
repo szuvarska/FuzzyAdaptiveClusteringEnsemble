@@ -10,16 +10,19 @@ class AdaptiveClusteringEnsemble:
 
     def __init__(self, base_member: BaseMemberClusterer, m_partitions: int, k_clusters: int, variable_k: bool = False,
                  sampling_ratio: float = 0.7, alpha_1: float = 0.8, alpha_2: float = 0.7,
-                 delta_alpha: float = 0.1, random_state: int = 42):
+                 alpha_1_min: float = 0.6, delta_alpha: float = 0.1, random_state: int = 42):
         self.base_member = base_member
         self.metrics = base_member.get_metrics_strategy()
         self.m_partitions = m_partitions
         self.k_clusters = k_clusters
         self.variable_k = variable_k
         self.sampling_ratio = sampling_ratio
+        self.final_alpha_1_ = None
+        self.partition_ids_ = None
 
         # Hyperparameters
         self.alpha_1_initial = alpha_1
+        self.alpha_1_min = alpha_1_min
         self.alpha_2 = alpha_2
         self.delta_alpha = delta_alpha
 
@@ -71,6 +74,37 @@ class AdaptiveClusteringEnsemble:
         self.partition_ids_ = np.asarray(partition_ids)
         return theta_1
 
+    def _find_best_pair(self, theta_1: np.ndarray, origins: list, n_instances: int):
+        """Finds the most similar pair of clusters from disjoint base partitions."""
+        n_cols = theta_1.shape[1]
+        best_pair = None
+        best_score = -1.0
+
+        for i in range(n_cols):
+            for j in range(i + 1, n_cols):
+                if origins[i].isdisjoint(origins[j]):
+                    score = self.metrics.set_correlation(theta_1[:, i], theta_1[:, j], n_instances)
+                    if score > best_score:
+                        best_score = score
+                        best_pair = (i, j)
+
+        return best_pair, best_score
+
+    @staticmethod
+    def _merge_pair(theta_1: np.ndarray, origins: list, pair: tuple):
+        """Merges two cluster columns and their partition origin sets."""
+        i, j = pair
+        new_col = theta_1[:, i] + theta_1[:, j]
+        new_origin = origins[i].union(origins[j])
+
+        theta_1 = np.delete(theta_1, [i, j], axis=1)
+        origins.pop(j)
+        origins.pop(i)
+
+        theta_1 = np.column_stack((theta_1, new_col))
+        origins.append(new_origin)
+        return theta_1, origins
+
     def stage2_consensus_merging(self, theta_1_initial: np.ndarray, n_instances: int, partition_ids=None):
         """
         Iteratively merges candidate clusters from different members.
@@ -84,82 +118,53 @@ class AdaptiveClusteringEnsemble:
 
         current_alpha = self.alpha_1_initial
 
+        # Pass 1: Merge at current_alpha; if too few clusters (< k), raise alpha_1 and retry
         while True:
             theta_1 = theta_1_initial.copy()
-
-            # Track origins to ensure we only merge clusters from different base partitions
             origins = [{int(p)} for p in partition_ids]
 
             while True:
-                merged_in_pass = False
-                n_cols = theta_1.shape[1]
+                best_pair, best_score = self._find_best_pair(theta_1, origins, n_instances)
+                if best_pair is not None and best_score >= current_alpha:
+                    theta_1, origins = self._merge_pair(theta_1, origins, best_pair)
+                else:
+                    break
 
-                best_pair = None
-                best_score = -1
-
-                # Find the most similar valid pair
-                for i in range(n_cols):
-                    for j in range(i + 1, n_cols):
-                        if origins[i].isdisjoint(origins[j]):  # Must be from different members
-                            score = self.metrics.set_correlation(theta_1[:, i], theta_1[:, j], n_instances)
-                            if score >= current_alpha and score > best_score:
-                                best_score = score
-                                best_pair = (i, j)
-
-                # Execute merge if a valid pair met the threshold
-                if best_pair is not None:
-                    i, j = best_pair
-                    # Aggregate components
-                    new_col = theta_1[:, i] + theta_1[:, j]
-                    new_origin = origins[i].union(origins[j])
-
-                    # Drop old columns (delete j first to maintain valid index for i)
-                    theta_1 = np.delete(theta_1, [i, j], axis=1)
-                    origins.pop(j)
-                    origins.pop(i)
-
-                    # Append merged cluster
-                    theta_1 = np.column_stack((theta_1, new_col))
-                    origins.append(new_origin)
-
-                    merged_in_pass = True
-
-                if not merged_in_pass:
-                    break  # Iterative merging complete for this alpha threshold
-
-            lam = theta_1.shape[1]  # Active clusters
-
-            if lam == self.k_clusters:
-                # Perfect merge count
-                theta_2 = np.empty((n_instances, 0))
+            if theta_1.shape[1] >= self.k_clusters:
                 break
 
-            elif lam > self.k_clusters:
-                # Too many clusters: Filter based on cluster certainty (Equation 7)
-                max_theta_per_row = np.max(theta_1, axis=1, keepdims=True)
-                max_theta_per_row[max_theta_per_row == 0] = 1e-9  # Prevent division by zero
+            current_alpha += self.delta_alpha
+            if current_alpha > 1.0:
+                raise ValueError("Cannot resolve clusters: Merging threshold exceeded 1.0 limit.")
 
-                S_x = theta_1 / max_theta_per_row  # Normalized membership similarity
-
-                certainties = []
-                for g in range(lam):
-                    cg_size = self.metrics.cardinality(theta_1[:, g])
-                    rho = np.sum(S_x[:, g]) / cg_size if cg_size > 0 else 0.0
-                    certainties.append(rho)
-
-                # Retain top k certain clusters in Theta_1, move remainder to Theta_2
-                top_k_indices = np.argsort(certainties)[-self.k_clusters:][::-1]
-                eliminated_indices = [idx for idx in range(lam) if idx not in top_k_indices]
-
-                theta_2 = theta_1[:, eliminated_indices]
-                theta_1 = theta_1[:, top_k_indices]
+        # If still > k, adapt alpha_1 down to max S_c (>= alpha_1_min)
+        while theta_1.shape[1] > self.k_clusters:
+            best_pair, best_score = self._find_best_pair(theta_1, origins, n_instances)
+            if best_pair is None or best_score < self.alpha_1_min:
                 break
+            current_alpha = best_score
+            theta_1, origins = self._merge_pair(theta_1, origins, best_pair)
 
-            else:
-                # Too few clusters: Alpha threshold was too lenient (too many merges). Make it stricter.
-                current_alpha += self.delta_alpha
-                if current_alpha > 1.0:
-                    raise ValueError("Cannot resolve clusters: Merging threshold exceeded 1.0 limit.")
+        # If still > k after reaching alpha_1_min, eliminate lowest-certainty clusters
+        lam = theta_1.shape[1]
+        if lam == self.k_clusters:
+            theta_2 = np.empty((n_instances, 0))
+        else:
+            max_theta_per_row = np.max(theta_1, axis=1, keepdims=True)
+            max_theta_per_row[max_theta_per_row == 0] = 1e-9
+            S_x = theta_1 / max_theta_per_row
+
+            certainties = []
+            for g in range(lam):
+                cg_size = self.metrics.cardinality(theta_1[:, g])
+                rho = np.sum(S_x[:, g]) / cg_size if cg_size > 0 else 0.0
+                certainties.append(rho)
+
+            top_k_indices = np.argsort(certainties)[-self.k_clusters:][::-1]
+            eliminated_indices = [idx for idx in range(lam) if idx not in top_k_indices]
+
+            theta_2 = theta_1[:, eliminated_indices]
+            theta_1 = theta_1[:, top_k_indices]
 
         self.final_alpha_1_ = current_alpha
         return theta_1, theta_2
