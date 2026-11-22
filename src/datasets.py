@@ -1,7 +1,7 @@
 """
-Local loader for the 12 UCI benchmark datasets used in the experiments.
+Local loader for the 12 UCI benchmark datasets and 6 synthetic SIPU datasets used in the experiments.
 
-Nothing is downloaded here. Each dataset is read from the raw UCI files that you place in
+Nothing is downloaded here. Each dataset is read from the raw files that you place in
 ``data/raw/<dataset folder>/`` (see ``data/README.md`` for the exact file names and links).
 Iris and Wine fall back to the copies bundled with scikit-learn when the raw files are absent.
 
@@ -43,6 +43,16 @@ class Dataset:
     def n_features(self) -> int:
         return int(self.X.shape[1])
 
+    def subsample(self, max_instances: Optional[int], seed: int = 0) -> "Dataset":
+        """Stratified random subset of at most ``max_instances`` points (the dataset itself if smaller)."""
+        if max_instances is None or self.n_instances <= max_instances:
+            return self
+        from sklearn.model_selection import train_test_split
+        idx, _ = train_test_split(np.arange(self.n_instances), train_size=max_instances,
+                                  stratify=self.y, random_state=seed)
+        idx = np.sort(idx)
+        return Dataset(self.name, self.X[idx], self.y[idx], self.class_names)
+
     def preprocessed(self) -> np.ndarray:
         """Median imputation, static-column removal and Z-score scaling."""
         return DataPreprocessor().process_dataset(self.X)
@@ -81,6 +91,41 @@ def _parse_segmentation(paths: List[str]) -> pd.DataFrame:
                     continue  # header line with column names
                 rows.append([parts[0]] + values)
     return pd.DataFrame(rows)
+
+
+def _read_pa(path: str) -> np.ndarray:
+    """SIPU partition file: a 'VQ PARTITIONING' header ending in a dashed line, then one label per line."""
+    with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+        lines = [line.strip() for line in fh]
+    start = next(i for i, line in enumerate(lines) if line.startswith("---")) + 1
+    return np.array([int(v) for v in lines[start:] if v])
+
+
+def _parse_sipu(paths: List[str]) -> pd.DataFrame:
+    """
+    SIPU data file (whitespace-separated points) + ground truth, returned with the label as last column.
+    Ground truth is a ``.pa`` partition file, or else a centroid file: each point then gets the label of
+    its nearest true centroid (Birch3 publishes no partition).
+    """
+    data_path, truth_path = paths
+    X = np.loadtxt(data_path)
+    if truth_path.endswith(".pa"):
+        y = _read_pa(truth_path)
+    else:
+        centroids = np.loadtxt(truth_path)
+        sq_dist = (X ** 2).sum(1)[:, None] - 2 * X @ centroids.T + (centroids ** 2).sum(1)[None, :]
+        y = np.argmin(sq_dist, axis=1)
+    if len(y) != len(X):
+        raise ValueError(f"{truth_path}: {len(y)} labels for {len(X)} points")
+    df = pd.DataFrame(X)
+    df[X.shape[1]] = y
+    return df
+
+
+def _sipu(key, name, folder, data_file, truth_file, shape, k):
+    return DatasetSpec(key, name, folder, [data_file, truth_file], label_col=-1, expected_shape=shape,
+                       expected_k=k, custom_parser=_parse_sipu,
+                       source_url="https://cs.joensuu.fi/sipu/datasets/")
 
 
 DATASET_SPECS: Dict[str, DatasetSpec] = {
@@ -125,21 +170,30 @@ DATASET_SPECS: Dict[str, DatasetSpec] = {
         DatasetSpec("dermatology", "Dermatology", "dermatology", ["dermatology.data"], label_col=-1,
                     expected_shape=(366, 34), expected_k=6,
                     source_url="https://archive.ics.uci.edu/dataset/33/dermatology"),
+        # --- Synthetic SIPU benchmarks (Franti & Sieranoja) ---
+        _sipu("birch1", "Birch1", "birch", "birch1.txt", "b1-gt.pa", (100000, 2), 100),
+        _sipu("birch2", "Birch2", "birch", "birch2.txt", "b2-gt.pa", (100000, 2), 100),
+        _sipu("birch3", "Birch3", "birch", "birch3.txt", "b3-gt.txt", (100000, 2), 100),
+        _sipu("unbalance", "Unbalance", "unbalance", "unbalance.txt", "unbalance-gt.pa", (6500, 2), 8),
+        _sipu("dim032", "Dim032", "dim", "dim032.txt", "dim032.pa", (1024, 32), 16),
+        _sipu("dim064", "Dim064", "dim", "dim064.txt", "dim064.pa", (1024, 64), 16),
     ]
 }
 
 # Groups used by the experiment scripts
 ACE_PAPER_DATASETS = ["iris", "wine", "new_thyroid", "glass", "breast_cancer", "soybean_small", "ionosphere"]
 FUZZY_HYPOTHESIS_DATASETS = ["ecoli", "yeast", "vehicle", "image_segmentation", "dermatology"]
-ALL_DATASETS = ACE_PAPER_DATASETS + FUZZY_HYPOTHESIS_DATASETS
+SIPU_DATASETS = ["birch1", "birch2", "birch3", "unbalance", "dim032", "dim064"]
+ALL_DATASETS = ACE_PAPER_DATASETS + FUZZY_HYPOTHESIS_DATASETS + SIPU_DATASETS
 
 
 def _resolve_files(spec: DatasetSpec, data_dir: str) -> List[str]:
     folder = os.path.join(data_dir, spec.folder)
     paths: List[str] = []
     for pattern in spec.files:
-        matches = sorted(glob.glob(os.path.join(folder, pattern)))
-        paths.extend(matches)
+        paths.extend(sorted(glob.glob(os.path.join(folder, pattern))))
+    if spec.custom_parser is _parse_sipu and len(paths) != len(spec.files):
+        return []  # data and ground truth are both required
     return paths
 
 

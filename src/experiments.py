@@ -1,6 +1,7 @@
 """
 Experiment runner (plan, sections 4-5).
 
+* Datasets larger than ``max_instances`` (Birch1-3) are replaced by one fixed stratified subsample.
 * Two settings: ``fixed`` (every base member uses the true k) and ``variable`` (k drawn from [k-2, k+2]).
 * Methods: K-Means, single FCM, EAC, ACE (K-Means members) and Fuzzy-ACE (FCM members).
 * 10 independent seeded runs per (setting, dataset, method). Within a run every method gets the same seed.
@@ -25,15 +26,16 @@ import time
 import traceback
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Callable, Dict, Iterable, List, Optional
+from functools import partial
+from typing import Dict, Iterable, List, Optional
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
 
 from src.baselines import EACClusterer, FCMClusterer, KMeansClusterer
-from src.datasets import ALL_DATASETS, DEFAULT_DATA_DIR, PROJECT_ROOT, load_dataset
-from src.ensemble import AdaptiveClusteringEnsemble
+from src.datasets import ALL_DATASETS, DATASET_SPECS, DEFAULT_DATA_DIR, PROJECT_ROOT, load_dataset
+from src.ensemble import AdaptiveClusteringEnsemble, normalized_similarity
 from src.models import FCMMember, KMeansMember
 
 DEFAULT_RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
@@ -64,6 +66,8 @@ class ExperimentConfig:
     fuzzy_ace_m_range: tuple = (1.5, 2.5)        # m drawn per base partition in Fuzzy-ACE
     kmeans_n_init: int = 1                       # single K-Means run
     eac_linkage: str = "average"
+    max_instances: Optional[int] = 5000          # larger datasets (Birch) use a stratified subsample
+    subsample_seed: int = 0                      # same subsample for every method and run
     data_dir: str = DEFAULT_DATA_DIR
     results_dir: str = DEFAULT_RESULTS_DIR
     n_jobs: int = 1
@@ -143,6 +147,7 @@ class CsvAppender:
 
 
 def _completed_keys(raw_path: str) -> set:
+    """(setting, dataset, method, run) keys already stored with status 'ok'."""
     if not os.path.exists(raw_path) or os.path.getsize(raw_path) == 0:
         return set()
     done = pd.read_csv(raw_path, usecols=KEY_COLUMNS + ["status"])
@@ -150,22 +155,50 @@ def _completed_keys(raw_path: str) -> set:
     return {(r.setting, r.dataset, r.method, int(r.run)) for r in done.itertuples()}
 
 
+def _remove_files(*paths: str) -> None:
+    for p in paths:
+        if os.path.exists(p):
+            os.remove(p)
+
+
+def _parallel_map(func, tasks: list, n_jobs: int):
+    """Yields func(*task) for every task, in order when n_jobs == 1, as they finish otherwise."""
+    if n_jobs == 1:
+        return (func(*t) for t in tasks)
+    from joblib import Parallel, delayed
+    return Parallel(n_jobs=n_jobs, return_as="generator_unordered")(delayed(func)(*t) for t in tasks)
+
+
 # ----------------------------------------------------------------------------------------------
 # Single run
 # ----------------------------------------------------------------------------------------------
-_DATA_CACHE: Dict[str, tuple] = {}
+_DATA_CACHE: Dict[tuple, tuple] = {}
 
 
-def _get_data(dataset: str, data_dir: str):
-    if dataset not in _DATA_CACHE:
-        ds = load_dataset(dataset, data_dir)
-        _DATA_CACHE[dataset] = (ds, ds.preprocessed())
-    return _DATA_CACHE[dataset]
+def _get_data(dataset: str, cfg: ExperimentConfig):
+    """(Dataset, preprocessed X), subsampled to cfg.max_instances points if larger."""
+    key = (dataset, cfg.data_dir, cfg.max_instances, cfg.subsample_seed)
+    if key not in _DATA_CACHE:
+        ds = load_dataset(dataset, cfg.data_dir).subsample(cfg.max_instances, cfg.subsample_seed)
+        _DATA_CACHE[key] = (ds, ds.preprocessed())
+    return _DATA_CACHE[key]
+
+
+def _available(cfg: ExperimentConfig) -> List[str]:
+    """Datasets whose files exist locally; missing ones are reported and skipped."""
+    found = []
+    for d in cfg.datasets:
+        try:
+            _get_data(d, cfg)
+            found.append(d)
+        except FileNotFoundError as exc:
+            print(f"SKIP {d}: {exc}")
+    return found
 
 
 def run_single(cfg: ExperimentConfig, setting: str, dataset: str, method: str, run: int) -> tuple:
     """Runs one (setting, dataset, method, run) and returns (result_row, labels or None)."""
-    ds, X = _get_data(dataset, cfg.data_dir)
+    ds, X = _get_data(dataset, cfg)
     seed = cfg.base_seed + run
     row = {"experiment": cfg.name, "setting": setting, "dataset": dataset, "method": method,
            "run": run, "seed": seed, "k_true": ds.k, "n_instances": X.shape[0], "n_features": X.shape[1],
@@ -198,19 +231,9 @@ def run_experiment(cfg: ExperimentConfig, resume: bool = True, verbose: bool = T
     raw_path = os.path.join(out_dir, "raw_results.csv")
     labels_path = os.path.join(out_dir, "predicted_labels.csv")
     if not resume:
-        for p in (raw_path, labels_path):
-            if os.path.exists(p):
-                os.remove(p)
-    done = _completed_keys(raw_path) if resume else set()
-
-    # Datasets without local files are skipped (and reported) instead of failing the experiment
-    datasets = []
-    for d in cfg.datasets:
-        try:
-            _get_data(d, cfg.data_dir)
-            datasets.append(d)
-        except FileNotFoundError as exc:
-            print(f"SKIP {d}: {exc}")
+        _remove_files(raw_path, labels_path)
+    done = _completed_keys(raw_path)
+    datasets = _available(cfg)
 
     tasks = [(s, d, m, r) for s in cfg.settings for d in datasets for m in cfg.methods
              for r in range(cfg.n_runs) if (s, d, m, r) not in done]
@@ -220,7 +243,7 @@ def run_experiment(cfg: ExperimentConfig, resume: bool = True, verbose: bool = T
     raw_writer = CsvAppender(raw_path, RAW_COLUMNS)
     labels_writer = CsvAppender(labels_path, KEY_COLUMNS + ["seed", "labels"])
 
-    def _store(row, labels, i):
+    for i, (row, labels) in enumerate(_parallel_map(partial(run_single, cfg), tasks, cfg.n_jobs), 1):
         raw_writer.append(row)
         if labels is not None:
             labels_writer.append({**{k: row[k] for k in KEY_COLUMNS}, "seed": row["seed"],
@@ -229,16 +252,6 @@ def run_experiment(cfg: ExperimentConfig, resume: bool = True, verbose: bool = T
             print(f"  [{i}/{len(tasks)}] {row['setting']:8s} {row['dataset']:18s} {row['method']:9s} "
                   f"run {row['run']}: ARI={row['ari']:.4f} NMI={row['nmi']:.4f} "
                   f"({row['runtime_s']:.1f}s) {row['status']}")
-
-    if cfg.n_jobs == 1:
-        for i, t in enumerate(tasks, 1):
-            _store(*run_single(cfg, *t), i)
-    else:
-        from joblib import Parallel, delayed
-        results = Parallel(n_jobs=cfg.n_jobs, return_as="generator_unordered")(
-            delayed(run_single)(cfg, *t) for t in tasks)
-        for i, (row, labels) in enumerate(results, 1):
-            _store(row, labels, i)
 
     raw = load_raw_results(out_dir)
     summarize(raw, out_dir)
@@ -272,7 +285,7 @@ def summarize(raw: pd.DataFrame, out_dir: str) -> pd.DataFrame:
             means = sub.pivot(index="dataset", columns="method", values=f"{metric}_mean")
             stds = sub.pivot(index="dataset", columns="method", values=f"{metric}_std")
             cols = [m for m in method_order if m in means.columns]
-            order = [d for d in ALL_DATASETS if d in means.index]
+            order = [d for d in DATASET_SPECS if d in means.index]
             means, stds = means.loc[order, cols], stds.loc[order, cols]
             pretty = means.round(4).astype(str) + " ± " + stds.round(4).astype(str)
             pretty.loc["Average"] = means.mean().round(4).astype(str)
@@ -291,7 +304,7 @@ GRID_COLUMNS = ["setting", "dataset", "method", "run", "seed", "alpha_2", "ari",
 def _grid_single(cfg: ExperimentConfig, setting: str, dataset: str, method: str, run: int,
                  alpha_2_values: Iterable[float]) -> List[dict]:
     """Stages 1-2 do not depend on alpha_2, so they are computed once and Stage 3 is re-run per value."""
-    ds, X = _get_data(dataset, cfg.data_dir)
+    ds, X = _get_data(dataset, cfg)
     seed = cfg.base_seed + run
     base = {"setting": setting, "dataset": dataset, "method": method, "run": run, "seed": seed,
             "timestamp": datetime.now().isoformat(timespec="seconds")}
@@ -300,8 +313,7 @@ def _grid_single(cfg: ExperimentConfig, setting: str, dataset: str, method: str,
         ace = build_method(method, ds.k, setting, seed, cfg)
         theta = ace.stage1_transformation(X)
         theta_1, theta_2 = ace.stage2_consensus_merging(theta, X.shape[0])
-        max_row = np.max(theta_1, axis=1, keepdims=True)
-        s_x_max = np.max(theta_1 / np.where(max_row == 0, 1e-9, max_row), axis=1)
+        s_x_max = np.max(normalized_similarity(theta_1), axis=1)
         for a2 in alpha_2_values:
             ace.alpha_2 = float(a2)
             labels = ace.stage3_hard_clustering(theta_1, theta_2)
@@ -321,22 +333,10 @@ def run_alpha2_grid_search(cfg: ExperimentConfig, alpha_2_values=(0.5, 0.6, 0.7,
     os.makedirs(out_dir, exist_ok=True)
     write_config(out_dir, asdict(cfg), extra={"alpha_2_values": list(alpha_2_values)})
     raw_path = os.path.join(out_dir, "raw_results.csv")
-    if not resume and os.path.exists(raw_path):
-        os.remove(raw_path)
-
-    done = set()
-    if resume and os.path.exists(raw_path) and os.path.getsize(raw_path) > 0:
-        prev = pd.read_csv(raw_path)
-        prev = prev[prev["status"] == "ok"]
-        done = {(r.setting, r.dataset, r.method, int(r.run)) for r in prev.itertuples()}
-
-    datasets = []
-    for d in cfg.datasets:
-        try:
-            _get_data(d, cfg.data_dir)
-            datasets.append(d)
-        except FileNotFoundError as exc:
-            print(f"SKIP {d}: {exc}")
+    if not resume:
+        _remove_files(raw_path)
+    done = _completed_keys(raw_path)
+    datasets = _available(cfg)
     methods = [m for m in cfg.methods if m in ("ACE", "Fuzzy-ACE")]
     tasks = [(s, d, m, r) for s in cfg.settings for d in datasets for m in methods
              for r in range(cfg.n_runs) if (s, d, m, r) not in done]
@@ -344,13 +344,8 @@ def run_alpha2_grid_search(cfg: ExperimentConfig, alpha_2_values=(0.5, 0.6, 0.7,
         print(f"[{cfg.name}] {len(tasks)} ensemble fits to do -> {out_dir}")
 
     writer = CsvAppender(raw_path, GRID_COLUMNS)
-    if cfg.n_jobs == 1:
-        results = (_grid_single(cfg, *t, alpha_2_values) for t in tasks)
-    else:
-        from joblib import Parallel, delayed
-        results = Parallel(n_jobs=cfg.n_jobs, return_as="generator_unordered")(
-            delayed(_grid_single)(cfg, *t, alpha_2_values) for t in tasks)
-    for i, rows in enumerate(results, 1):
+    grid = partial(_grid_single, cfg, alpha_2_values=tuple(alpha_2_values))
+    for i, rows in enumerate(_parallel_map(grid, tasks, cfg.n_jobs), 1):
         for row in rows:
             writer.append(row)
         if verbose:

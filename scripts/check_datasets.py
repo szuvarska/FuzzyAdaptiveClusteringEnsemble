@@ -1,4 +1,4 @@
-"""Lists the 12 datasets, whether their raw files are in data/raw, and their size.
+"""Lists every dataset, whether their raw files are in data/raw, and their size.
 
     python scripts/check_datasets.py
 """

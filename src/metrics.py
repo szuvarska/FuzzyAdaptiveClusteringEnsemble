@@ -1,85 +1,56 @@
-import numpy as np
+"""Set-correlation metrics used by ACE's Stage 2, for crisp and fuzzy cluster vectors."""
 from abc import ABC, abstractmethod
+
+import numpy as np
 
 
 class BaseMetrics(ABC):
-    """
-    Abstract strategy for mathematical clustering metrics.
-    Keeps the core set_correlation equation universal.
-    """
-
     @abstractmethod
     def cardinality(self, a: np.ndarray) -> float:
-        """Calculates the size/cardinality of a cluster."""
-        pass
+        """Size of a cluster."""
 
     @abstractmethod
-    def overlap(self, a: np.ndarray, b: np.ndarray) -> float:
-        """Calculates the similarity/overlap between two clusters."""
-        pass
+    def overlap_matrix(self, A: np.ndarray, B: np.ndarray, size_a: np.ndarray, size_b: np.ndarray) -> np.ndarray:
+        """Similarity between every column of A and every column of B."""
+
+    def cardinalities(self, theta: np.ndarray) -> np.ndarray:
+        return np.array([self.cardinality(theta[:, g]) for g in range(theta.shape[1])])
+
+    def set_correlation_matrix(self, A: np.ndarray, B: np.ndarray, n: int,
+                               size_a: np.ndarray = None, size_b: np.ndarray = None) -> np.ndarray:
+        """
+        (n * overlap - sqrt(|a||b|)) / sqrt((n - |a|)(n - |b|)) for every column pair (a in A, b in B);
+        0 where a cluster is empty or contains all n objects. Cluster sizes can be passed in if known.
+        """
+        size_a = self.cardinalities(A) if size_a is None else np.asarray(size_a, dtype=float)
+        size_b = self.cardinalities(B) if size_b is None else np.asarray(size_b, dtype=float)
+        valid = ((size_a > 0) & (size_a < n))[:, None] & ((size_b > 0) & (size_b < n))[None, :]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            numerator = n * self.overlap_matrix(A, B, size_a, size_b) - np.sqrt(np.outer(size_a, size_b))
+            denominator = np.sqrt(np.outer(n - size_a, n - size_b))
+            scores = numerator / denominator
+        return np.where(valid & (denominator > 0), scores, 0.0)
 
     def set_correlation(self, a: np.ndarray, b: np.ndarray, n: int) -> float:
-        """
-        Universal Set Correlation.
-        Utilizes the abstract cardinality and overlap methods.
-        """
-        size_a = self.cardinality(a)
-        size_b = self.cardinality(b)
-
-        # Edge case protection: Avoid division by zero or invalid bounds
-        if size_a <= 0 or size_b <= 0 or size_a >= n or size_b >= n:
-            return 0.0
-
-        sim_overlap = self.overlap(a, b)
-
-        numerator = (n * sim_overlap) - np.sqrt(size_a * size_b)
-
-        # Safe denominator calculation to prevent RuntimeWarnings
-        val_a = max(0.0, n - size_a)
-        val_b = max(0.0, n - size_b)
-        denominator = np.sqrt(val_a * val_b)
-
-        return numerator / denominator if denominator > 0 else 0.0
+        return float(self.set_correlation_matrix(a[:, None], b[:, None], n)[0, 0])
 
 
 class BaselineMetrics(BaseMetrics):
-    """
-    Baseline metrics strategy using discrete binary representations.
-    """
+    """Crisp clusters: count of members and cosine overlap of the indicator vectors."""
 
-    def cardinality(self, a: np.ndarray) -> float:
-        # Discrete count of objects
+    def cardinality(self, a):
         return float(np.sum(a > 0))
 
-    def overlap(self, a: np.ndarray, b: np.ndarray) -> float:
-        # Cosine Similarity for discrete vectors
-        a_bin = (a > 0).astype(float)
-        b_bin = (b > 0).astype(float)
-
-        size_a = float(np.sum(a_bin))
-        size_b = float(np.sum(b_bin))
-
-        return float(np.dot(a, b) / np.sqrt(size_a * size_b))
+    def overlap_matrix(self, A, B, size_a, size_b):
+        return (A.T @ B) / np.sqrt(np.outer(size_a, size_b))
 
 
 class FuzzyMetrics(BaseMetrics):
-    """
-    Proposed metrics strategy using continuous fuzzy representations.
-    """
+    """Fuzzy clusters: memberships capped at 1 (so merged sizes never exceed n), cosine overlap."""
 
-    def cardinality(self, a: np.ndarray) -> float:
-        # Continuous sum of memberships
-        # Bounded Sum fix: Cap memberships at 1.0 so merged sizes never exceed n
+    def cardinality(self, a):
         return float(np.sum(np.clip(a, 0.0, 1.0)))
 
-    def overlap(self, a: np.ndarray, b: np.ndarray) -> float:
-        # True Cosine Similarity for continuous fractional vectors.
-        # This prevents the metric from penalizing fuzzy sets compared to crisp K-Means sets.
-        a_bound = np.clip(a, 0.0, 1.0)
-        b_bound = np.clip(b, 0.0, 1.0)
-
-        norm_a = np.linalg.norm(a_bound)
-        norm_b = np.linalg.norm(b_bound)
-
-        # Angular distance perfectly normalizes the soft fuzzy product
-        return float(np.dot(a_bound, b_bound) / (norm_a * norm_b))
+    def overlap_matrix(self, A, B, size_a, size_b):
+        A, B = np.clip(A, 0.0, 1.0), np.clip(B, 0.0, 1.0)
+        return (A.T @ B) / np.outer(np.linalg.norm(A, axis=0), np.linalg.norm(B, axis=0))

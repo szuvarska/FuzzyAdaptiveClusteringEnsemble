@@ -60,7 +60,7 @@ class EACClusterer:
     70% feature sampling, same fixed or variable k), so the only difference between EAC and ACE is the
     consensus function. The co-association matrix C[i, j] = fraction of members that put i and j in the
     same cluster; 1 - C is used as a distance for hierarchical clustering cut at k clusters.
-    Note: O(n^2) memory, which is the bottleneck ACE avoids.
+    Note: O(n^2) memory (~8 bytes * n^2), which is the bottleneck ACE avoids.
     """
 
     def __init__(self, k_clusters: int, m_partitions: int = 10, variable_k: bool = False,
@@ -80,11 +80,12 @@ class EACClusterer:
 
     def fit_predict(self, X: np.ndarray) -> np.ndarray:
         theta = self._generate_ensemble(X)
-        co_association = (theta @ theta.T) / self.m_partitions
-        np.fill_diagonal(co_association, 1.0)
-        distance = np.clip(1.0 - co_association, 0.0, None)
-        self.co_association_ = co_association
+        # Built in place: a single n x n buffer is the co-association matrix, then the distance 1 - C
+        distance = theta @ theta.T
+        distance /= self.m_partitions
+        np.fill_diagonal(distance, 1.0)
+        np.subtract(1.0, distance, out=distance)
+        np.clip(distance, 0.0, None, out=distance)
 
         Z = linkage(squareform(distance, checks=False), method=self.linkage_method)
-        labels = fcluster(Z, t=self.k_clusters, criterion="maxclust")
-        return labels - 1
+        return fcluster(Z, t=self.k_clusters, criterion="maxclust") - 1

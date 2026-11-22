@@ -10,7 +10,7 @@ import argparse
 
 import _bootstrap  # noqa: F401
 
-from src.datasets import ALL_DATASETS
+from src.datasets import ALL_DATASETS, DATASET_SPECS
 from src.experiments import SETTINGS, ExperimentConfig, run_alpha2_grid_search
 
 DEFAULT_SUBSET = ["iris", "wine", "glass", "ecoli", "dermatology"]
@@ -19,7 +19,7 @@ DEFAULT_SUBSET = ["iris", "wine", "glass", "ecoli", "dermatology"]
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--name", default="alpha2_grid_search")
-    p.add_argument("--datasets", nargs="+", default=DEFAULT_SUBSET, choices=ALL_DATASETS)
+    p.add_argument("--datasets", nargs="+", default=DEFAULT_SUBSET, choices=list(DATASET_SPECS))
     p.add_argument("--settings", nargs="+", default=["fixed"], choices=SETTINGS)
     p.add_argument("--methods", nargs="+", default=["ACE", "Fuzzy-ACE"], choices=["ACE", "Fuzzy-ACE"])
     p.add_argument("--alpha-2-values", nargs="+", type=float, default=[0.5, 0.6, 0.7, 0.8, 0.9])

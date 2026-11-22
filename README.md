@@ -28,7 +28,7 @@ Dependencies: `numpy`, `scikit-learn`, `scikit-fuzzy`, `scipy`, `pandas`, `matpl
   - `models.py`: Base members (K-Means, Fuzzy C-Means).
   - `metrics.py`: Cardinality / overlap / set-correlation strategies (binary and fuzzy).
   - `data_pipeline.py`: Preprocessing (median imputation, constant-column removal, z-score).
-  - `datasets.py`: Loader for the 12 UCI datasets from local raw files (no downloading).
+  - `datasets.py`: Loader for the 12 UCI and 6 SIPU datasets from local raw files (no downloading).
   - `baselines.py`: Comparison methods – single K-Means, single FCM, EAC (co-association + average linkage).
   - `experiments.py`: Experiment runner, result storage and the α₂ grid search.
   - `stats_tests.py`: Friedman / Iman–Davenport / Nemenyi tests and critical-difference diagrams.
@@ -42,7 +42,7 @@ Dependencies: `numpy`, `scikit-learn`, `scikit-fuzzy`, `scipy`, `pandas`, `matpl
    ```bash
    python scripts/check_datasets.py
    ```
-2. Main experiment – 5 methods × 12 datasets × {fixed, variable} k × 10 seeded runs, followed by the statistical tests:
+2. Main experiment – 5 methods × 18 datasets × {fixed, variable} k × 10 seeded runs, followed by the statistical tests:
    ```bash
    python scripts/run_experiments.py --n-jobs -1
    ```

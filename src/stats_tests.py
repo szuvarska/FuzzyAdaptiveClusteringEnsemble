@@ -9,6 +9,7 @@ as used by Alqurashi & Wang (2019) and the project plan (section 5.2):
 """
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional
@@ -104,10 +105,10 @@ def compare_methods(scores: pd.DataFrame, alpha: float = 0.1, metric: str = "",
         ff_p = float(stats.f.sf(ff, df1, df2))
     reject = ff_p < alpha
 
-    cd = nemenyi_q(k, alpha) * np.sqrt(k * (k + 1) / (6 * N))
+    se = np.sqrt(k * (k + 1) / (6 * N))
+    cd = nemenyi_q(k, alpha) * se
     pvals, pairs = None, []
     if reject:
-        se = np.sqrt(k * (k + 1) / (6 * N))
         methods = list(R.index)
         pvals = pd.DataFrame(np.ones((k, k)), index=methods, columns=methods)
         for i, a in enumerate(methods):
@@ -204,8 +205,6 @@ def run_statistical_tests(experiment_dir: str, alpha: float = 0.1, metrics=("ari
                           methods: Optional[List[str]] = None, datasets: Optional[List[str]] = None,
                           tag: str = "") -> List[ComparisonResult]:
     """Reads ``summary.csv`` of an experiment, runs all tests and stores results in ``<dir>/statistics``."""
-    import json
-
     summary = pd.read_csv(os.path.join(experiment_dir, "summary.csv"))
     if methods:
         summary = summary[summary["method"].isin(methods)]
