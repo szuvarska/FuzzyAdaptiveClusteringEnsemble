@@ -33,9 +33,15 @@ Dependencies: `numpy`, `scikit-learn`, `scikit-fuzzy`, `scipy`, `pandas`, `matpl
   - `experiments.py`: Experiment runner, result storage and the α₂ grid search.
   - `stats_tests.py`: Friedman / Iman–Davenport / Nemenyi tests and critical-difference diagrams.
 - `scripts/`: Command-line entry points (see below).
-- `data/`: Put raw UCI files in `data/raw/` – see [`data/README.md`](data/README.md).
+- `data/`: Put raw UCI and SIPU files in `data/raw/` – see [`data/README.md`](data/README.md).
 - `results/`: Stored experiment results.
-- `notebooks/`: Jupyter notebooks – `02_framework_test.ipynb` runs the whole framework on Iris, Wine and Breast Cancer.
+- `notebooks/`: Jupyter notebooks for reproducing all benchmarks and diagnostic ablations:
+  - `02_framework_test.ipynb`: Quick end-to-end test on Iris, Wine, and Breast Cancer.
+  - `03_full_benchmark.ipynb`: Main 18-dataset benchmark, statistical tests, and α₂ sensitivity grid.
+  - `04_wine_unscaled_ace_test.ipynb`: Replication check comparing unscaled vs. Z-score standardized Wine.
+  - `05_fuzzy_sampling_1.ipynb`: Subsampling ablation (`sampling_ratio = 1.0`) on Iris, Wine, and Breast Cancer.
+  - `06_fuzzy_hyperparameters.ipynb`: Grid search over α₁ and fuzzifier `m` ranges on Wine, Glass, and Ecoli (plus sensitivity plot).
+  - `07_fuzzy_tuned_benchmark.ipynb`: Tuned Fuzzy-ACE (`m ∈ [1.05, 1.5]`) benchmark and comparison/merging with the main run.
 
 ## Running the Experiments
 1. Download the raw UCI files into `data/raw/` (`bash data/download_uci.sh`, details in [`data/README.md`](data/README.md)), then check them:
@@ -57,9 +63,11 @@ Dependencies: `numpy`, `scikit-learn`, `scikit-fuzzy`, `scipy`, `pandas`, `matpl
    python scripts/run_statistical_tests.py --name main --alpha 0.1
    python scripts/run_statistical_tests.py --name main --datasets ecoli yeast vehicle image_segmentation dermatology --tag fuzzy_subset
    ```
+5. Diagnostic ablations and tuned Fuzzy-ACE (m ∈ [1.05, 1.5]): run notebooks/04_wine_unscaled_ace_test.ipynb through notebooks/07_fuzzy_tuned_benchmark.ipynb.
 
 Default hyperparameters follow the plan: m = 10 members (5 × 70 % instances, 5 × 70 % features), α₁ = 0.8, Δα = 0.1,
-α₂ = 0.7, Fuzzy-ACE fuzzifier drawn from [1.5, 2.5] per member, single FCM baseline with m = 2.
+α₂ = 0.7, Fuzzy-ACE fuzzifier drawn from [1.5, 2.5] per member, single FCM baseline with m = 2.0, and Fuzzy-ACE 
+fuzzifier drawn from [1.5, 2.5] (plus tuned [1.05, 1.5] in notebook 07).
 
 ### Stored results
 ```
