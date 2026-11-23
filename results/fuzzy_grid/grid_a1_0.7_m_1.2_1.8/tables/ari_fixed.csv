@@ -1,0 +1,5 @@
+dataset,Fuzzy-ACE
+wine,0.8975 ± 0.0
+glass,0.1635 ± 0.0079
+ecoli,0.3744 ± 0.0219
+Average,0.4785

@@ -1,0 +1,49 @@
+{
+  "config": {
+    "name": "fuzzy_grid/grid_a1_0.5_m_1.5_2.0",
+    "datasets": [
+      "wine",
+      "glass",
+      "ecoli"
+    ],
+    "settings": [
+      "fixed",
+      "variable"
+    ],
+    "methods": [
+      "Fuzzy-ACE"
+    ],
+    "n_runs": 10,
+    "base_seed": 0,
+    "m_partitions": 10,
+    "sampling_ratio": 1.0,
+    "alpha_1": 0.5,
+    "alpha_2": 0.7,
+    "delta_alpha": 0.1,
+    "fcm_m_fuzz": 2.0,
+    "fuzzy_ace_m_range": [
+      1.5,
+      2.0
+    ],
+    "kmeans_n_init": 1,
+    "eac_linkage": "average",
+    "data_dir": "/media/marta/Dane/Sem9/FuzzyAdaptiveClusteringEnsemble/data/raw",
+    "results_dir": "/media/marta/Dane/Sem9/FuzzyAdaptiveClusteringEnsemble/results",
+    "n_jobs": -1
+  },
+  "versions": {
+    "python": "3.15.2",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "scikit-fuzzy": "0.5.0"
+  },
+  "sessions": [
+    {
+      "started": "2026-11-22T22:48:26",
+      "git_commit": "e3a425c4193c18d2c13fedd195b4e08c2c6d88f6",
+      "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.35"
+    }
+  ]
+}
