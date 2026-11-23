@@ -1,0 +1,214 @@
+[
+  {
+    "metric": "ari",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 6,
+    "n_methods": 5,
+    "datasets_used": [
+      "birch1",
+      "birch2",
+      "birch3",
+      "dim032",
+      "dim064",
+      "unbalance"
+    ],
+    "average_ranks": {
+      "EAC": 1.3333,
+      "KMeans": 2.1667,
+      "ACE": 2.8333,
+      "FCM": 4.0,
+      "Fuzzy-ACE": 4.6667
+    },
+    "friedman": {
+      "chi2": 17.466666666666686,
+      "p_value": 0.001568278257391141
+    },
+    "iman_davenport": {
+      "F": 13.367346938775565,
+      "df1": 4,
+      "df2": 20,
+      "p_value": 1.8499053677672564e-05,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 2.244749614842006,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 2.6667
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 3.3333
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.5
+        }
+      ]
+    }
+  },
+  {
+    "metric": "nmi",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 6,
+    "n_methods": 5,
+    "datasets_used": [
+      "birch1",
+      "birch2",
+      "birch3",
+      "dim032",
+      "dim064",
+      "unbalance"
+    ],
+    "average_ranks": {
+      "EAC": 1.5,
+      "KMeans": 1.8333,
+      "ACE": 3.0,
+      "FCM": 3.8333,
+      "Fuzzy-ACE": 4.8333
+    },
+    "friedman": {
+      "chi2": 18.40000000000001,
+      "p_value": 0.0010306018987383478
+    },
+    "iman_davenport": {
+      "F": 16.428571428571463,
+      "df1": 4,
+      "df2": 20,
+      "p_value": 4.145910726120053e-06,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 2.244749614842006,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 2.3333
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 3.3333
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 3.0
+        }
+      ]
+    }
+  },
+  {
+    "metric": "ari",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 6,
+    "n_methods": 5,
+    "datasets_used": [
+      "birch1",
+      "birch2",
+      "birch3",
+      "dim032",
+      "dim064",
+      "unbalance"
+    ],
+    "average_ranks": {
+      "EAC": 1.3333,
+      "KMeans": 2.1667,
+      "ACE": 2.6667,
+      "FCM": 4.1667,
+      "Fuzzy-ACE": 4.6667
+    },
+    "friedman": {
+      "chi2": 18.53333333333335,
+      "p_value": 0.0009704368128020378
+    },
+    "iman_davenport": {
+      "F": 16.951219512195184,
+      "df1": 4,
+      "df2": 20,
+      "p_value": 3.278994313218355e-06,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 2.244749614842006,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 2.8333
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 3.3333
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.5
+        }
+      ]
+    }
+  },
+  {
+    "metric": "nmi",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 6,
+    "n_methods": 5,
+    "datasets_used": [
+      "birch1",
+      "birch2",
+      "birch3",
+      "dim032",
+      "dim064",
+      "unbalance"
+    ],
+    "average_ranks": {
+      "EAC": 1.5,
+      "KMeans": 1.8333,
+      "ACE": 3.0,
+      "FCM": 4.0,
+      "Fuzzy-ACE": 4.6667
+    },
+    "friedman": {
+      "chi2": 17.73333333333336,
+      "p_value": 0.0013913168669875055
+    },
+    "iman_davenport": {
+      "F": 14.148936170212846,
+      "df1": 4,
+      "df2": 20,
+      "p_value": 1.2358278286048003e-05,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 2.244749614842006,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 2.5
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 3.1667
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.8333
+        }
+      ]
+    }
+  }
+]

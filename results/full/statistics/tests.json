@@ -1,0 +1,277 @@
+[
+  {
+    "metric": "ari",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 18,
+    "n_methods": 5,
+    "datasets_used": [
+      "birch1",
+      "birch2",
+      "birch3",
+      "breast_cancer",
+      "dermatology",
+      "dim032",
+      "dim064",
+      "ecoli",
+      "glass",
+      "image_segmentation",
+      "ionosphere",
+      "iris",
+      "new_thyroid",
+      "soybean_small",
+      "unbalance",
+      "vehicle",
+      "wine",
+      "yeast"
+    ],
+    "average_ranks": {
+      "EAC": 1.9444,
+      "KMeans": 2.5556,
+      "ACE": 2.9444,
+      "FCM": 3.3889,
+      "Fuzzy-ACE": 4.1667
+    },
+    "friedman": {
+      "chi2": 20.35555555555559,
+      "p_value": 0.00042481783797636616
+    },
+    "iman_davenport": {
+      "F": 6.700516351118777,
+      "df1": 4,
+      "df2": 68,
+      "p_value": 0.00013161616956319555,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 1.296006794392341,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 1.4444
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.2222
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 1.6111
+        }
+      ]
+    }
+  },
+  {
+    "metric": "nmi",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 18,
+    "n_methods": 5,
+    "datasets_used": [
+      "birch1",
+      "birch2",
+      "birch3",
+      "breast_cancer",
+      "dermatology",
+      "dim032",
+      "dim064",
+      "ecoli",
+      "glass",
+      "image_segmentation",
+      "ionosphere",
+      "iris",
+      "new_thyroid",
+      "soybean_small",
+      "unbalance",
+      "vehicle",
+      "wine",
+      "yeast"
+    ],
+    "average_ranks": {
+      "EAC": 1.8889,
+      "KMeans": 2.2222,
+      "ACE": 3.1667,
+      "FCM": 3.6111,
+      "Fuzzy-ACE": 4.1111
+    },
+    "friedman": {
+      "chi2": 25.022222222222183,
+      "p_value": 4.9794863644816576e-05
+    },
+    "iman_davenport": {
+      "F": 9.054872280037822,
+      "df1": 4,
+      "df2": 68,
+      "p_value": 6.35028542923691e-06,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 1.296006794392341,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 1.7222
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.2222
+        },
+        {
+          "better": "KMeans",
+          "worse": "FCM",
+          "rank_diff": 1.3889
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 1.8889
+        }
+      ]
+    }
+  },
+  {
+    "metric": "ari",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 18,
+    "n_methods": 5,
+    "datasets_used": [
+      "birch1",
+      "birch2",
+      "birch3",
+      "breast_cancer",
+      "dermatology",
+      "dim032",
+      "dim064",
+      "ecoli",
+      "glass",
+      "image_segmentation",
+      "ionosphere",
+      "iris",
+      "new_thyroid",
+      "soybean_small",
+      "unbalance",
+      "vehicle",
+      "wine",
+      "yeast"
+    ],
+    "average_ranks": {
+      "EAC": 1.9444,
+      "KMeans": 2.3889,
+      "ACE": 3.0556,
+      "FCM": 3.2222,
+      "Fuzzy-ACE": 4.3889
+    },
+    "friedman": {
+      "chi2": 24.977777777777806,
+      "p_value": 5.083006297361775e-05
+    },
+    "iman_davenport": {
+      "F": 9.030245746691886,
+      "df1": 4,
+      "df2": 68,
+      "p_value": 6.547033946561407e-06,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 1.296006794392341,
+      "significant_pairs": [
+        {
+          "better": "ACE",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 1.3333
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.4444
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.0
+        }
+      ]
+    }
+  },
+  {
+    "metric": "nmi",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 18,
+    "n_methods": 5,
+    "datasets_used": [
+      "birch1",
+      "birch2",
+      "birch3",
+      "breast_cancer",
+      "dermatology",
+      "dim032",
+      "dim064",
+      "ecoli",
+      "glass",
+      "image_segmentation",
+      "ionosphere",
+      "iris",
+      "new_thyroid",
+      "soybean_small",
+      "unbalance",
+      "vehicle",
+      "wine",
+      "yeast"
+    ],
+    "average_ranks": {
+      "EAC": 1.7778,
+      "KMeans": 2.2222,
+      "ACE": 3.2222,
+      "FCM": 3.6667,
+      "Fuzzy-ACE": 4.1111
+    },
+    "friedman": {
+      "chi2": 27.55555555555554,
+      "p_value": 1.53460380169471e-05
+    },
+    "iman_davenport": {
+      "F": 10.53999999999999,
+      "df1": 4,
+      "df2": 68,
+      "p_value": 1.054387741759507e-06,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 1.296006794392341,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "ACE",
+          "rank_diff": 1.4444
+        },
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 1.8889
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.3333
+        },
+        {
+          "better": "KMeans",
+          "worse": "FCM",
+          "rank_diff": 1.4444
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 1.8889
+        }
+      ]
+    }
+  }
+]

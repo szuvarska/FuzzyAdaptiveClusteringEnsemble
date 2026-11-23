@@ -1,0 +1,164 @@
+[
+  {
+    "metric": "ari",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 7,
+    "n_methods": 5,
+    "datasets_used": [
+      "breast_cancer",
+      "glass",
+      "ionosphere",
+      "iris",
+      "new_thyroid",
+      "soybean_small",
+      "wine"
+    ],
+    "average_ranks": {
+      "FCM": 2.4286,
+      "EAC": 2.5714,
+      "KMeans": 2.5714,
+      "ACE": 3.2857,
+      "Fuzzy-ACE": 4.1429
+    },
+    "friedman": {
+      "chi2": 5.828571428571436,
+      "p_value": 0.21232166851292192
+    },
+    "iman_davenport": {
+      "F": 1.5773195876288686,
+      "df1": 4,
+      "df2": 24,
+      "p_value": 0.21254088487256806,
+      "reject_h0": false
+    },
+    "nemenyi": null
+  },
+  {
+    "metric": "nmi",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 7,
+    "n_methods": 5,
+    "datasets_used": [
+      "breast_cancer",
+      "glass",
+      "ionosphere",
+      "iris",
+      "new_thyroid",
+      "soybean_small",
+      "wine"
+    ],
+    "average_ranks": {
+      "FCM": 2.5714,
+      "KMeans": 2.5714,
+      "EAC": 2.7143,
+      "ACE": 3.2857,
+      "Fuzzy-ACE": 3.8571
+    },
+    "friedman": {
+      "chi2": 3.542857142857153,
+      "p_value": 0.4713918137695582
+    },
+    "iman_davenport": {
+      "F": 0.8691588785046757,
+      "df1": 4,
+      "df2": 24,
+      "p_value": 0.4966967833588556,
+      "reject_h0": false
+    },
+    "nemenyi": null
+  },
+  {
+    "metric": "ari",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 7,
+    "n_methods": 5,
+    "datasets_used": [
+      "breast_cancer",
+      "glass",
+      "ionosphere",
+      "iris",
+      "new_thyroid",
+      "soybean_small",
+      "wine"
+    ],
+    "average_ranks": {
+      "EAC": 2.1429,
+      "FCM": 2.1429,
+      "KMeans": 2.2857,
+      "ACE": 4.0,
+      "Fuzzy-ACE": 4.4286
+    },
+    "friedman": {
+      "chi2": 14.057142857142862,
+      "p_value": 0.007114894888841002
+    },
+    "iman_davenport": {
+      "F": 6.049180327868856,
+      "df1": 4,
+      "df2": 24,
+      "p_value": 0.0016328253778243468,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 2.0782343123774223,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.2857
+        },
+        {
+          "better": "FCM",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.2857
+        },
+        {
+          "better": "KMeans",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 2.1429
+        }
+      ]
+    }
+  },
+  {
+    "metric": "nmi",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 7,
+    "n_methods": 5,
+    "datasets_used": [
+      "breast_cancer",
+      "glass",
+      "ionosphere",
+      "iris",
+      "new_thyroid",
+      "soybean_small",
+      "wine"
+    ],
+    "average_ranks": {
+      "EAC": 2.1429,
+      "FCM": 2.4286,
+      "KMeans": 2.5714,
+      "ACE": 3.7143,
+      "Fuzzy-ACE": 4.1429
+    },
+    "friedman": {
+      "chi2": 8.571428571428571,
+      "p_value": 0.07275144416040927
+    },
+    "iman_davenport": {
+      "F": 2.6470588235294117,
+      "df1": 4,
+      "df2": 24,
+      "p_value": 0.05821480492204749,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 2.0782343123774223,
+      "significant_pairs": []
+    }
+  }
+]

@@ -1,0 +1,74 @@
+{
+  "config": {
+    "name": "full_alpha2",
+    "datasets": [
+      "iris",
+      "wine",
+      "new_thyroid",
+      "glass",
+      "breast_cancer",
+      "soybean_small",
+      "ionosphere",
+      "ecoli",
+      "yeast",
+      "vehicle",
+      "image_segmentation",
+      "dermatology",
+      "birch1",
+      "birch2",
+      "birch3",
+      "unbalance",
+      "dim032",
+      "dim064"
+    ],
+    "settings": [
+      "fixed",
+      "variable"
+    ],
+    "methods": [
+      "ACE",
+      "Fuzzy-ACE"
+    ],
+    "n_runs": 10,
+    "base_seed": 0,
+    "m_partitions": 10,
+    "sampling_ratio": 0.7,
+    "alpha_1": 0.8,
+    "alpha_2": 0.7,
+    "delta_alpha": 0.1,
+    "fcm_m_fuzz": 2.0,
+    "fuzzy_ace_m_range": [
+      1.5,
+      2.5
+    ],
+    "kmeans_n_init": 1,
+    "eac_linkage": "average",
+    "max_instances": 5000,
+    "subsample_seed": 0,
+    "data_dir": "C:\\Users\\lukas\\PycharmProjects\\FuzzyAdaptiveClusteringEnsemble\\data\\raw",
+    "results_dir": "C:\\Users\\lukas\\PycharmProjects\\FuzzyAdaptiveClusteringEnsemble\\results",
+    "n_jobs": -1
+  },
+  "versions": {
+    "python": "3.12.7",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.5.1",
+    "scipy": "1.13.1",
+    "scikit-fuzzy": "0.5.0"
+  },
+  "sessions": [
+    {
+      "started": "2026-11-23T21:27:03",
+      "git_commit": "10a5c94058ce1c49df2ab5e7d96ecd6f4fec26c0",
+      "platform": "Windows-11-10.0.26300-SP0"
+    }
+  ],
+  "alpha_2_values": [
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9
+  ]
+}
