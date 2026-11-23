@@ -1,0 +1,56 @@
+{
+  "config": {
+    "name": "full_fuzzy_m105_15",
+    "datasets": [
+      "birch1",
+      "birch2",
+      "birch3"
+    ],
+    "settings": [
+      "fixed",
+      "variable"
+    ],
+    "methods": [
+      "Fuzzy-ACE"
+    ],
+    "n_runs": 10,
+    "base_seed": 0,
+    "m_partitions": 10,
+    "sampling_ratio": 0.7,
+    "alpha_1": 0.8,
+    "alpha_2": 0.7,
+    "delta_alpha": 0.1,
+    "fcm_m_fuzz": 2.0,
+    "fuzzy_ace_m_range": [
+      1.05,
+      1.5
+    ],
+    "kmeans_n_init": 1,
+    "eac_linkage": "average",
+    "max_instances": 5000,
+    "subsample_seed": 0,
+    "data_dir": "/media/marta/Dane/Sem9/FuzzyAdaptiveClusteringEnsemble/data/raw",
+    "results_dir": "/media/marta/Dane/Sem9/FuzzyAdaptiveClusteringEnsemble/results",
+    "n_jobs": -1
+  },
+  "versions": {
+    "python": "3.15.2",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "scikit-fuzzy": "0.5.0"
+  },
+  "sessions": [
+    {
+      "started": "2026-11-23T00:25:56",
+      "git_commit": "d901be0dc7e09bad554cdecf989daed81704e6e7",
+      "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.35"
+    },
+    {
+      "started": "2026-11-23T00:33:34",
+      "git_commit": "d901be0dc7e09bad554cdecf989daed81704e6e7",
+      "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.35"
+    }
+  ]
+}

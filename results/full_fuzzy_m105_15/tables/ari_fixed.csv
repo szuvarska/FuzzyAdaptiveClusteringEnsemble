@@ -1,0 +1,20 @@
+dataset,Fuzzy-ACE
+iris,0.6212 ± 0.0236
+wine,0.8958 ± 0.0227
+new_thyroid,0.5691 ± 0.0299
+glass,0.1732 ± 0.0102
+breast_cancer,0.8168 ± 0.0145
+soybean_small,0.9937 ± 0.02
+ionosphere,0.1586 ± 0.0102
+ecoli,0.4327 ± 0.064
+yeast,0.1512 ± 0.0117
+vehicle,0.0684 ± 0.0019
+image_segmentation,0.4801 ± 0.0093
+dermatology,0.7253 ± 0.0597
+birch1,0.6473 ± 0.1295
+birch2,0.6158 ± 0.1007
+birch3,0.6762 ± 0.0509
+unbalance,0.86 ± 0.0771
+dim032,1.0 ± 0.0
+dim064,1.0 ± 0.0
+Average,0.6047
