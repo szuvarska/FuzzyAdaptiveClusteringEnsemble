@@ -1,0 +1,171 @@
+[
+  {
+    "metric": "ari",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 5,
+    "n_methods": 6,
+    "datasets_used": [
+      "dermatology",
+      "ecoli",
+      "image_segmentation",
+      "vehicle",
+      "yeast"
+    ],
+    "average_ranks": {
+      "EAC": 1.8,
+      "ACE": 3.0,
+      "KMeans": 3.4,
+      "Fuzzy-ACE (tuned)": 4.0,
+      "Fuzzy-ACE": 4.2,
+      "FCM": 4.6
+    },
+    "friedman": {
+      "chi2": 7.285714285714278,
+      "p_value": 0.20024370884468748
+    },
+    "iman_davenport": {
+      "F": 1.645161290322578,
+      "df1": 5,
+      "df2": 20,
+      "p_value": 0.1940107449756895,
+      "reject_h0": false
+    },
+    "nemenyi": null
+  },
+  {
+    "metric": "nmi",
+    "setting": "fixed",
+    "alpha": 0.1,
+    "n_datasets": 5,
+    "n_methods": 6,
+    "datasets_used": [
+      "dermatology",
+      "ecoli",
+      "image_segmentation",
+      "vehicle",
+      "yeast"
+    ],
+    "average_ranks": {
+      "EAC": 1.2,
+      "KMeans": 2.4,
+      "Fuzzy-ACE (tuned)": 3.6,
+      "ACE": 3.6,
+      "Fuzzy-ACE": 4.4,
+      "FCM": 5.8
+    },
+    "friedman": {
+      "chi2": 18.028571428571457,
+      "p_value": 0.002910808981707863
+    },
+    "iman_davenport": {
+      "F": 10.344262295082025,
+      "df1": 5,
+      "df2": 20,
+      "p_value": 5.203991904636794e-05,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 3.0633461116889813,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 4.6
+        },
+        {
+          "better": "EAC",
+          "worse": "Fuzzy-ACE",
+          "rank_diff": 3.2
+        },
+        {
+          "better": "KMeans",
+          "worse": "FCM",
+          "rank_diff": 3.4
+        }
+      ]
+    }
+  },
+  {
+    "metric": "ari",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 5,
+    "n_methods": 6,
+    "datasets_used": [
+      "dermatology",
+      "ecoli",
+      "image_segmentation",
+      "vehicle",
+      "yeast"
+    ],
+    "average_ranks": {
+      "ACE": 2.6,
+      "EAC": 2.8,
+      "Fuzzy-ACE (tuned)": 3.0,
+      "KMeans": 3.2,
+      "FCM": 4.4,
+      "Fuzzy-ACE": 5.0
+    },
+    "friedman": {
+      "chi2": 6.714285714285738,
+      "p_value": 0.24277103074014345
+    },
+    "iman_davenport": {
+      "F": 1.468750000000007,
+      "df1": 5,
+      "df2": 20,
+      "p_value": 0.2439811355656283,
+      "reject_h0": false
+    },
+    "nemenyi": null
+  },
+  {
+    "metric": "nmi",
+    "setting": "variable",
+    "alpha": 0.1,
+    "n_datasets": 5,
+    "n_methods": 6,
+    "datasets_used": [
+      "dermatology",
+      "ecoli",
+      "image_segmentation",
+      "vehicle",
+      "yeast"
+    ],
+    "average_ranks": {
+      "EAC": 1.6,
+      "KMeans": 2.6,
+      "ACE": 3.0,
+      "Fuzzy-ACE (tuned)": 3.6,
+      "Fuzzy-ACE": 4.2,
+      "FCM": 6.0
+    },
+    "friedman": {
+      "chi2": 16.314285714285717,
+      "p_value": 0.006001772946331815
+    },
+    "iman_davenport": {
+      "F": 7.513157894736845,
+      "df1": 5,
+      "df2": 20,
+      "p_value": 0.0004116220453953478,
+      "reject_h0": true
+    },
+    "nemenyi": {
+      "critical_difference": 3.0633461116889813,
+      "significant_pairs": [
+        {
+          "better": "EAC",
+          "worse": "FCM",
+          "rank_diff": 4.4
+        },
+        {
+          "better": "KMeans",
+          "worse": "FCM",
+          "rank_diff": 3.4
+        }
+      ]
+    }
+  }
+]

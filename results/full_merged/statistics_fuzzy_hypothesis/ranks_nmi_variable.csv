@@ -1,0 +1,7 @@
+dataset,ACE,EAC,FCM,Fuzzy-ACE,Fuzzy-ACE (tuned),KMeans
+dermatology,2.0,1.0,6.0,5.0,4.0,3.0
+ecoli,4.0,1.0,6.0,5.0,2.0,3.0
+image_segmentation,3.0,2.0,6.0,5.0,4.0,1.0
+vehicle,3.0,2.0,6.0,1.0,4.0,5.0
+yeast,3.0,2.0,6.0,5.0,4.0,1.0
+Average rank,3.0,1.6,6.0,4.2,3.6,2.6
